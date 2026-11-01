@@ -11,7 +11,7 @@ The current Part B hedges a **theoretical** Black-Scholes call priced from India
 *Question: how far is the volatility the option market charged for an at-the-money NIFTY option from India VIX, and does the gap change the result?*
 
 - **Data needed.** Historical end-of-day prices for NIFTY index options (every strike and expiry), with contract specifications (expiry date, strike, lot size), for the same 2016-2026 span. NSE publishes these as daily derivatives bhavcopy files; the format changed over the period, so the loader must handle both.
-- **Work.** Select the contract nearest at-the-money with about 21 trading days to expiry at each start date; invert Black-Scholes for its implied volatility using the sourced rate (below); compare with VIX; re-run the backtest selling the *actual* option at its settlement price and settling at the actual expiry payoff.
+- **Work.** Select the contract nearest at-the-money with about 21 trading days to expiry at each start date; invert Black-Scholes for its implied volatility using the sourced rate (the RBI 91-day T-bill yield); compare with VIX; re-run the backtest selling the *actual* option at its settlement price and settling at the actual expiry payoff.
 - **Acceptance.** Tests that the implied-volatility inversion round-trips Black-Scholes prices; that the contract chosen at each date is the documented rule; a table of (option implied vol - VIX) with HAC intervals; the Part B result recomputed with the real option, reported beside the theoretical one.
 - **Known problems to plan for.** Settlement prices are not executable prices; illiquid strikes; European-style cash settlement against the index; expiry-day conventions (weekly versus monthly contracts changed over the period); dividends (the series used here is price return).
 
@@ -21,8 +21,8 @@ The current Part B hedges a **theoretical** Black-Scholes call priced from India
 
 - **Data needed.** NIFTY futures daily prices for each expiry, with the expiry calendar.
 - **Work.** Replace the index hedge with the near-month future (and its roll); the hedge ratio is applied to the future, so the cash account no longer pays the full notional; add the basis (future minus index) and financing as explicit terms; compute the delta from the forward, not the spot.
-- **Rate.** Replace the 6% placeholder with a sourced short rate (for example the RBI/CCIL 91-day treasury-bill yield, daily) and report how much the result moves relative to the placeholder.
-- **Acceptance.** An identity test: with a zero basis and the sourced rate equal to the placeholder, the futures hedge reproduces the index hedge; a decomposition of the PnL difference into basis, carry and roll.
+- **Rate.** The risk-free rate is already the sourced RBI 91-day Treasury-bill yield (weekly, as of the window start). For the futures hedge, use a financing rate consistent with the futures prices (implied carry) and report how much the result moves relative to the T-bill baseline.
+- **Acceptance.** An identity test: with a zero basis and the futures-implied financing rate equal to the T-bill rate, the futures hedge reproduces the index hedge; a decomposition of the PnL difference into basis, carry and roll.
 
 ## Milestone 3: measured frictions
 

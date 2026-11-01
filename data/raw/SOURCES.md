@@ -1,7 +1,8 @@
 # Raw data sources
 
-The 22 CSV files in this folder are **untouched** copies of the files supplied for this project.
-No code in this repository writes to this folder.
+The 22 NIFTY 50 / India VIX CSV files in this folder are **untouched** copies of the files supplied for this project.
+The risk-free rate comes from a 23rd file, `RBI_91day_tbill_auctions.csv`, which *is* generated: `python -m src.rates` flattens the RBI spreadsheets in `rbi_xlsx/` into it (see "Risk-free rate" below).
+No other code in this repository writes to this folder.
 
 | Series | Files | Coverage | Source | Downloaded |
 |---|---|---|---|---|
@@ -12,7 +13,7 @@ Source URLs and download dates are as stated by the person who downloaded the fi
 
 | Input | Value | Source |
 |---|---|---|
-| Risk-free rate for Part B | 6% per year, constant | **Unsourced assumption (placeholder).** No sourced rate was supplied. A sensitivity check at 4% and 8% is run and reported in the README. |
+| Risk-free rate for Part B | RBI 91-day Treasury-bill auction cut-off yield, as of each window's start | Sourced; see "Risk-free rate" below. Earlier versions of this project used an unsourced constant 6%; constant 4%, 6% and 8% are still reported as sensitivity cases. |
 
 ## Known problems in the raw files (all handled in `src/real_data.py`, none edited in place)
 
@@ -28,6 +29,19 @@ Source URLs and download dates are as stated by the person who downloaded the fi
 5. File formats differ between the two sources (date format, row order, BOM, trailing spaces in VIX
    column names). The loaders normalise this.
 6. A full report is in `results/data_inspection.txt` (regenerate with `python src/inspect_data.py`).
+
+## Risk-free rate: RBI 91-day Treasury-bill auctions
+
+| Item | Detail |
+|---|---|
+| Series | Reserve Bank of India, *Handbook of Statistics on the Indian Economy*, table "Auctions of 91-Day Government of India Treasury Bills", column "Implicit Yield at Cut-off Price (percent)". The RBI note says the yield uses an actual/365 day count. |
+| Where from | RBI website, Handbook of Statistics on the Indian Economy (https://rbi.org.in/Scripts/AnnualPublications.aspx?head=Handbook+of+Statistics+on+Indian+Economy), one XLSX table per edition, downloaded by hand. Table numbers differ between editions (210, 213, 215, 217, 218, 221); go by the title. |
+| Files | 11 spreadsheets in `rbi_xlsx/` (the 2025-26 edition was supplied twice; the duplicate is not kept), flattened into `RBI_91day_tbill_auctions.csv` (564 auctions, 2015-07-02 to 2026-06-24). The CSV records the source file of every row. |
+| Checks | Where two editions overlap they must agree to four decimals; a disagreement stops the build. Three auctions with no accepted bids (printed as "-": 2023-03-29, 2025-02-20, 2026-03-25) have no yield and are skipped; the previous auction is used. |
+| Use | For a window starting on date t, the latest auction on or before t (no look-ahead), converted to a continuously compounded rate r = (365/91) ln(1 + y 91/365). A window more than 120 days after the latest auction is an error; one more than 28 days after is flagged in `results/partB_windows.csv` (`rate_stale_days`). |
+| Known gap | The table ends on 2026-06-24, so the windows that start after 2026-07-22 (39 windows, up to 84 days stale) carry forward that yield (5.25%). News reports say the 91-day yield rose after June 2026, so these windows' rate is probably somewhat too low; the effect is negligible (see the rate sensitivity in the report). Dropping in a newer RBI table and running `python -m src.rates` updates it. |
+| Terms | RBI's website terms were not checked and nothing here is legal advice. Like the NSE files, the RBI tables are therefore not redistributed in the public repository. |
+| Proxy, not the true rate | A 91-day bill yield is a short-term government rate, not the rate at which a derivatives seller finances a hedge (which would include a futures-implied carry); it is a better-sourced stand-in for the earlier constant, not an exact rate. |
 
 ## Methodology references (official documents)
 

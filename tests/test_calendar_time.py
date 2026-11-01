@@ -56,7 +56,7 @@ def test_premium_uses_the_actual_horizon(real):
     i = 700
     T = ws.calendar_days[i] / 365.0
     S0 = ws.paths[i, 0]
-    want = bs.call_price(S0, S0, T, ws.sigma_implied[i], cfg.RISK_FREE_RATE_B) / S0
+    want = bs.call_price(S0, S0, T, ws.sigma_implied[i], ws.r[i]) / S0
     assert cal.premium[i] == pytest.approx(want)
 
 

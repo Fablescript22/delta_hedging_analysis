@@ -23,7 +23,7 @@ import pandas as pd
 
 from . import config as cfg
 from . import real_data as rd
-from .backtest import Backtest, mean_hac, ols_hac
+from .backtest import Backtest, mean_hac, ols_hac, window_rate
 from .hedge import gamma_pnl_estimate, hedge_pnl
 
 DAYS_PER_YEAR = 365.0
@@ -39,10 +39,12 @@ def window_day_offsets(data: rd.RealData, ws: rd.WindowSet) -> np.ndarray:
     return (days - days[:, :1]).astype(float)
 
 
-def run_calendar_backtest(data: rd.RealData, ws: rd.WindowSet, r: float = cfg.RISK_FREE_RATE_B) -> Backtest:
+def run_calendar_backtest(data: rd.RealData, ws: rd.WindowSet, r=None) -> Backtest:
     """Daily-rebalanced backtest on the ACT/365 clock (see module docstring)."""
-    if not np.isfinite(r):
+    r = window_rate(ws, r)
+    if not np.all(np.isfinite(r)):
         raise ValueError("r must be finite")
+    r_vec = np.broadcast_to(np.asarray(r, dtype=float), (len(ws.t0),))
     off = window_day_offsets(data, ws)
     if not np.array_equal(off[:, -1], ws.calendar_days.astype(float)):
         raise ValueError("calendar offsets inconsistent with WindowSet.calendar_days")
@@ -52,10 +54,11 @@ def run_calendar_backtest(data: rd.RealData, ws: rd.WindowSet, r: float = cfg.RI
     for m in range(M):
         P = ws.paths[m:m + 1]
         S0, sig, T, times = P[:, 0], ws.sigma_implied[m:m + 1], float(tt[m, -1]), tt[m]
-        res = hedge_pnl(P, S0, sig, r, T, times=times)
+        rm = r_vec[m:m + 1]
+        res = hedge_pnl(P, S0, sig, rm, T, times=times)
         pnl[m], prem[m] = res.pnl[0] / S0[0], res.premium[0] / S0[0]
-        est[m] = gamma_pnl_estimate(P, S0, sig, r, T, times=times)[0] / S0[0]
-        wsum[m] = gamma_pnl_estimate(P, S0, sig, r, T, times=times, realised_var=0.0)[0] / sig[0] ** 2 / S0[0]
+        est[m] = gamma_pnl_estimate(P, S0, sig, rm, T, times=times)[0] / S0[0]
+        wsum[m] = gamma_pnl_estimate(P, S0, sig, rm, T, times=times, realised_var=0.0)[0] / sig[0] ** 2 / S0[0]
     lr = np.diff(np.log(ws.paths), axis=1)
     rv = np.sqrt(np.square(lr).sum(axis=1) / tt[:, -1])
     return Backtest(ws=ws, r=r, pnl=pnl, premium=prem, rv=rv, gap=ws.sigma_implied ** 2 - rv ** 2, est=est,

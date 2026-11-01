@@ -77,6 +77,7 @@ class RealData:
     vix: pd.DataFrame              # VIX with stale rows NaN'd
     aligned: pd.DataFrame          # inner join on dates with a valid VIX close
     report: dict = field(default_factory=dict)
+    tbill: pd.DataFrame | None = None   # RBI 91-day T-bill auctions (yield_pct, rate); None for synthetic fixtures
 
 
 def load_all(raw_dir: Path = cfg.RAW_DIR, drop_weekend_sessions: bool = cfg.DROP_WEEKEND_SESSIONS,
@@ -88,6 +89,8 @@ def load_all(raw_dir: Path = cfg.RAW_DIR, drop_weekend_sessions: bool = cfg.DROP
         integrity.assert_ok(raw_dir)
     nifty = load_nifty(raw_dir)
     vix = load_vix(raw_dir)
+    from . import rates
+    tbill = rates.load_tbill(raw_dir)
     if drop_weekend_sessions:
         nifty = nifty[nifty.index.dayofweek < 5]
         vix = vix[vix.index.dayofweek < 5]
@@ -123,7 +126,7 @@ def load_all(raw_dir: Path = cfg.RAW_DIR, drop_weekend_sessions: bool = cfg.DROP
         last_date=aligned.index.max().date().isoformat(),
         weekend_sessions_kept=int((aligned.index.dayofweek >= 5).sum()),
     )
-    return RealData(nifty=nifty, vix=vix, aligned=aligned, report=report)
+    return RealData(nifty=nifty, vix=vix, aligned=aligned, report=report, tbill=tbill)
 
 
 # ----------------------------------------------------------------------------- validation (checklist #7)
@@ -165,6 +168,9 @@ class WindowSet:
     calendar_days: np.ndarray      # (M,) calendar days spanned
     window: int                    # trading days per window (W)
     n_excluded_long_span: int
+    r: np.ndarray | None = None               # (M,) continuously compounded risk-free rate in force at t0 (None: constant fallback)
+    tbill_yield_pct: np.ndarray | None = None  # (M,) the 91-day T-bill auction yield it was built from, percent
+    rate_stale_days: np.ndarray | None = None  # (M,) days between t0 and that auction
 
 
 MAX_CALENDAR_SPAN = 45             # guard: a 21-trading-day window should span ~27-35 calendar days
@@ -194,6 +200,10 @@ def build_windows(data: RealData, window: int = cfg.WINDOW_TRADING_DAYS) -> Wind
     n_long = int((~keep).sum())
 
     vix_pct = data.aligned.loc[t0[keep], "vix_pct"].to_numpy()
+    r = y = stale = None
+    if data.tbill is not None:
+        from . import rates
+        r, y, stale = rates.rate_asof(t0[keep], data.tbill)
     return WindowSet(
         t0=t0[keep],
         t_end=t_end[keep],
@@ -203,4 +213,5 @@ def build_windows(data: RealData, window: int = cfg.WINDOW_TRADING_DAYS) -> Wind
         calendar_days=cal[keep],
         window=window,
         n_excluded_long_span=n_long,
+        r=r, tbill_yield_pct=y, rate_stale_days=stale,
     )

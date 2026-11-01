@@ -161,8 +161,9 @@ def hedge_pnl(
     sigma : float or array (M,)
         Implied volatility used to price the option at t0 AND (unless ``sigma_hedge`` is
         given) to compute every delta.  Fixed for the life of the trade (baseline hedger).
-    r : float
-        Continuously compounded risk-free rate.
+    r : float or array (M,)
+        Continuously compounded risk-free rate (one per path if an array, e.g. the T-bill rate in force on each
+        real-data window's start date; constant over the life of the trade).
     T : float
         Time of the last column, in years from t0.
     times : array (n+1,), optional
@@ -190,7 +191,7 @@ def hedge_pnl(
     n = ncol - 1
     if option not in ("call", "put"):
         raise ValueError("option must be 'call' or 'put'")
-    r = _check_scalar("r", r)
+    r = _check_per_path("r", r, M, positive=False)
     cost_rate = _check_scalar("cost_rate", cost_rate, nonneg=True, upper=1.0)
     K = _check_per_path("K", K, M)
     sigma = _check_per_path("sigma", sigma, M)
@@ -209,6 +210,8 @@ def hedge_pnl(
 
     K_arr = np.broadcast_to(np.asarray(K, dtype=float), (M,))[:, None]
     sig_arr = np.broadcast_to(np.asarray(sigma, dtype=float), (M,))[:, None]
+    r_vec = np.broadcast_to(np.asarray(r, dtype=float), (M,))          # per-path rate
+    r_col = r_vec[:, None]
 
     tau = (T - t_g[:-1])[None, :]
     if sigma_hedge is None:
@@ -218,18 +221,18 @@ def hedge_pnl(
         if sig_h.shape != (M, n):
             raise ValueError("sigma_hedge must have shape (n_paths, n_steps)")
         sig_h = sig_h[:, idx]
-    delta = bs.delta(S_g[:, :-1], K_arr, tau, sig_h, r, option)          # (M, len(idx))
+    delta = bs.delta(S_g[:, :-1], K_arr, tau, sig_h, r_col, option)       # (M, len(idx))
     if delta_step is not None:
         step = _check_scalar("delta_step", delta_step, positive=True, upper=1.0)
         delta = np.round(delta / step) * step
 
-    premium = bs.price(P[:, 0], K_arr[:, 0], T - times[0], sig_arr[:, 0], r, option)
+    premium = bs.price(P[:, 0], K_arr[:, 0], T - times[0], sig_arr[:, 0], r_vec, option)
 
     dt = np.diff(t_g)
-    grow = np.exp(r * dt)[None, :]                       # e^{r dt_i}
-    to_T = np.exp(r * (T - t_g[1:]))[None, :]            # e^{r (T - t_{i+1})}
+    grow = np.exp(r_col * dt[None, :])                   # e^{r dt_i}
+    to_T = np.exp(r_col * (T - t_g[1:])[None, :])        # e^{r (T - t_{i+1})}
     gains = (delta * (S_g[:, 1:] - S_g[:, :-1] * grow) * to_T).sum(axis=1)
-    V_T = premium * np.exp(r * T) + gains
+    V_T = premium * np.exp(r_vec * T) + gains
 
     S_T = P[:, -1]
     payoff = np.maximum(S_T - K_arr[:, 0], 0.0) if option == "call" else np.maximum(K_arr[:, 0] - S_T, 0.0)
@@ -238,7 +241,7 @@ def hedge_pnl(
     if cost_rate > 0.0:
         d_prev = np.concatenate([np.zeros((M, 1)), delta[:, :-1]], axis=1)
         trade_cost = cost_rate * np.abs(delta - d_prev) * S_g[:, :-1]    # at each rebalance time
-        cost = (trade_cost * np.exp(r * (T - t_g[:-1]))[None, :]).sum(axis=1)
+        cost = (trade_cost * np.exp(r_col * (T - t_g[:-1])[None, :])).sum(axis=1)
         cost += cost_rate * np.abs(delta[:, -1]) * S_T                   # liquidate hedge at T
     pnl = V_T - payoff - cost
 
@@ -290,7 +293,7 @@ def gamma_pnl_estimate(paths, K, sigma, r, T, *, realised_var=None, times=None,
         raise ValueError(f"return_convention must be one of {RETURN_CONVENTIONS}")
     P = _as_paths(paths)
     M, ncol = P.shape
-    r = _check_scalar("r", r)
+    r = _check_per_path("r", r, M, positive=False)
     K = _check_per_path("K", K, M)
     sigma = _check_per_path("sigma", sigma, M)
     if realised_var is not None:
@@ -305,7 +308,8 @@ def gamma_pnl_estimate(paths, K, sigma, r, T, *, realised_var=None, times=None,
     K_arr = np.broadcast_to(np.asarray(K, dtype=float), (M,))[:, None]
     sig = np.broadcast_to(np.asarray(sigma, dtype=float), (M,))[:, None]
     tau = (T - times[:-1])[None, :]
-    w = np.exp(r * tau) * 0.5 * bs.gamma(S, K_arr, tau, sig, r) * S**2
+    r_col = np.broadcast_to(np.asarray(r, dtype=float), (M,))[:, None]
+    w = np.exp(r_col * tau) * 0.5 * bs.gamma(S, K_arr, tau, sig, r_col) * S**2
     if realised_var is None:
         if return_convention == "simple":
             sq = np.square(P[:, 1:] / P[:, :-1] - 1.0)

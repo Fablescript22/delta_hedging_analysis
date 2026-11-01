@@ -24,7 +24,7 @@ from pathlib import Path
 from . import config as cfg
 
 MANIFEST = cfg.RAW_DIR / "MANIFEST.json"
-DATE_FORMATS = {"NIFTY": "%d %b %Y", "hist_india_vix": "%d-%b-%Y"}
+DATE_FORMATS = {"NIFTY": "%d %b %Y", "hist_india_vix": "%d-%b-%Y", "RBI_91day_tbill": "%Y-%m-%d"}
 
 
 class IntegrityError(RuntimeError):
@@ -68,8 +68,8 @@ def verify(raw_dir: Path = cfg.RAW_DIR, manifest: Path = MANIFEST) -> list[str]:
     found = {p.name: p for p in raw_files(raw_dir)}
     if not found:
         return [f"no raw data found in {raw_dir}. The NIFTY 50 and India VIX CSV files are not part of the public repository "
-                "(their publishers' terms restrict redistribution): download them as described in data/raw/SOURCES.md, "
-                "put them in data/raw/, then rerun. `python -m src check-data` tells you whether they match the manifest."]
+                "(their publishers' terms restrict redistribution), and neither is the RBI T-bill file derived from the RBI "
+                "spreadsheets: obtain them as described in data/raw/SOURCES.md, put them in data/raw/, then rerun. `python -m src check-data` tells you whether they match the manifest."]
     problems = []
     for name in sorted(set(expected) - set(found)):
         problems.append(f"missing file: {name}")

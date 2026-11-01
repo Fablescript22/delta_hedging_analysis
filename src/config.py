@@ -35,16 +35,16 @@ TRADING_DAYS_PER_YEAR = 252     # used to annualise daily returns and to set dt
 WINDOW_TRADING_DAYS = 21        # ~30 calendar days, the horizon India VIX is quoted for
 
 # ---- Risk-free rate for Part B ------------------------------------------------
-# !! PLACEHOLDER ASSUMPTION !!  This is NOT a sourced number.  It is a constant
-# assumption used only until a defensible value and source (e.g. RBI / CCIL
-# 91-day T-bill yield) is supplied.  The README flags it.  Over a ~1-month
-# window the rate has a very small effect on hedging PnL; a sensitivity check
-# over several values is run in the backtest.
+# Baseline: the RBI 91-day Treasury-bill auction cut-off yield (data/raw/RBI_91day_tbill_auctions.csv), looked up as of
+# each window's start date (no look-ahead) and converted to a continuously compounded rate; see src/rates.py.
+# RISK_FREE_RATE_B is NOT the baseline any more.  It is the single constant that earlier versions of this project
+# assumed (6%, an unsourced placeholder), kept as one of the sensitivity cases and as the fallback for synthetic test
+# fixtures that carry no rate of their own.
 RISK_FREE_RATE_B = 0.06
-RISK_FREE_SOURCE_B = ("ASSUMPTION: constant 6% p.a., unsourced placeholder. The user was asked for a value and "
-                      "source, gave none, and chose this placeholder on 2026-10-17")
-RISK_FREE_IS_PLACEHOLDER = True
-RISK_FREE_SENSITIVITY_B = (0.04, 0.06, 0.08)   # user-requested sensitivity check; differences go in the README
+RISK_FREE_SOURCE_B = ("RBI 91-day T-bill auction cut-off yield (Handbook of Statistics on the Indian Economy), "
+                      "latest auction on or before each window's start, continuously compounded")
+RISK_FREE_IS_PLACEHOLDER = False
+RISK_FREE_SENSITIVITY_B = (0.04, 0.06, 0.08)   # constant-rate sensitivity cases, compared with the T-bill baseline
 
 # ---- Data-cleaning decisions (see data/raw/SOURCES.md and README) -------------
 VIX_PLAUSIBLE_RANGE_PCT = (5.0, 100.0)   # India VIX is quoted in percent; outside this = data error

@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 
 from . import config as cfg
+from . import rates
 from . import real_data as rd
 from .gbm_sim import make_rng, simulate_gbm_paths
 from .hedge import gamma_pnl_estimate, hedge_pnl
@@ -131,7 +132,7 @@ def block_bootstrap_r2(x, y, block: int, n_boot: int, rng) -> tuple[float, float
 @dataclass
 class Backtest:
     ws: rd.WindowSet
-    r: float
+    r: object                  # float, or (M,) array of per-window rates
     pnl: np.ndarray            # (M,) PnL as a FRACTION of S0, daily rebalancing
     premium: np.ndarray        # (M,) premium as a fraction of S0
     rv: np.ndarray             # (M,) annualised realised vol (decimal)
@@ -140,13 +141,25 @@ class Backtest:
     slope_theory: np.ndarray   # (M,) per-window sum_i w_i dt / S0  (the gamma-formula slope on the gap)
 
 
-def run_backtest(ws: rd.WindowSet, r: float = cfg.RISK_FREE_RATE_B, centred_rv: bool = False,
+BASELINE_RATE_LABEL = "RBI 91-day T-bill (baseline)"
+
+
+def window_rate(ws: rd.WindowSet, r=None):
+    """The rate to use: ``r`` if given (scalar or one per window), else the window set's own T-bill rate, else the
+    constant fallback (synthetic fixtures without a rate)."""
+    if r is not None:
+        return r
+    return ws.r if ws.r is not None else cfg.RISK_FREE_RATE_B
+
+
+def run_backtest(ws: rd.WindowSet, r=None, centred_rv: bool = False,
                  rebalance_every: int = 1, sigma_hedge=None) -> Backtest:
     W = ws.window
     if isinstance(rebalance_every, bool) or not isinstance(rebalance_every, (int, np.integer)) \
             or not 1 <= rebalance_every <= W:
         raise ValueError(f"rebalance_every must be an integer in [1, {W}]")
-    if not np.isfinite(r):
+    r = window_rate(ws, r)
+    if not np.all(np.isfinite(r)):
         raise ValueError("r must be finite")
     T = W / cfg.TRADING_DAYS_PER_YEAR
     times = np.arange(W + 1) / cfg.TRADING_DAYS_PER_YEAR
@@ -182,7 +195,7 @@ def crash_mask(ws: rd.WindowSet) -> np.ndarray:
 
 
 # ----------------------------------------------------------------------------------------- GBM benchmarks
-def gbm_benchmarks(ws: rd.WindowSet, bt: Backtest, r: float = cfg.RISK_FREE_RATE_B, n_paths: int = 40_000,
+def gbm_benchmarks(ws: rd.WindowSet, bt: Backtest, r=None, n_paths: int = 40_000,
                    twin_reps: int = 20) -> pd.DataFrame:
     """What the Part B regression would look like if returns were exactly GBM (same 21 daily steps).
 
@@ -194,8 +207,10 @@ def gbm_benchmarks(ws: rd.WindowSet, bt: Backtest, r: float = cfg.RISK_FREE_RATE
         The regressor, however, is the realised vol of each *simulated* path, which equals the input vol plus
         21-observation sampling noise, so the regressor distribution is NOT identical to the historical one
         (see ``twin_volatility_comparison``).
-    The simulated drift is mu = r.
+    The simulated drift is mu = r (the window's own T-bill rate in the twin; the sample mean rate in the constant-GBM row).
     """
+    r = window_rate(ws, r) if r is not None else bt.r
+    r_mean = float(np.mean(r))
     W = ws.window
     T = W / cfg.TRADING_DAYS_PER_YEAR
     dt = 1.0 / cfg.TRADING_DAYS_PER_YEAR
@@ -204,8 +219,8 @@ def gbm_benchmarks(ws: rd.WindowSet, bt: Backtest, r: float = cfg.RISK_FREE_RATE
 
     si, sr = float(ws.sigma_implied.mean()), float(bt.rv.mean())
     rng = make_rng(11, 0)
-    P = simulate_gbm_paths(n_paths, W, 100.0, r, sr, T, rng)
-    res = hedge_pnl(P, 100.0, si, r, T, times=times)
+    P = simulate_gbm_paths(n_paths, W, 100.0, r_mean, sr, T, rng)
+    res = hedge_pnl(P, 100.0, si, r_mean, T, times=times)
     o = ols_hac(si**2 - realised_vol(P) ** 2, res.pnl / 100.0, 0)
     rows.append(dict(benchmark="constant GBM (sigma_i = mean VIX, sigma_r = mean realised vol)", observations=n_paths,
                      slope=o["slope"], r2=o["r2"], mean_pnl_pct=float(res.pnl.mean()), std_pnl_pct=float(res.pnl.std(ddof=1)),
@@ -216,7 +231,8 @@ def gbm_benchmarks(ws: rd.WindowSet, bt: Backtest, r: float = cfg.RISK_FREE_RATE
         rng = make_rng(12, k)
         sig_r = bt.rv[:, None]
         Z = rng.standard_normal((len(bt.rv), W))
-        lr = (r - 0.5 * sig_r**2) * dt + sig_r * np.sqrt(dt) * Z
+        r_col = np.broadcast_to(np.asarray(r, dtype=float), (len(bt.rv),))[:, None]
+        lr = (r_col - 0.5 * sig_r**2) * dt + sig_r * np.sqrt(dt) * Z
         P = 100.0 * np.exp(np.concatenate([np.zeros((len(bt.rv), 1)), np.cumsum(lr, axis=1)], axis=1))
         res = hedge_pnl(P, 100.0, ws.sigma_implied, r, T, times=times)
         X.append(ws.sigma_implied**2 - realised_vol(P) ** 2)
@@ -229,7 +245,7 @@ def gbm_benchmarks(ws: rd.WindowSet, bt: Backtest, r: float = cfg.RISK_FREE_RATE
     return pd.DataFrame(rows)
 
 
-def timing_effect(paths: np.ndarray, sigma_i: np.ndarray, r: float) -> np.ndarray:
+def timing_effect(paths: np.ndarray, sigma_i: np.ndarray, r) -> np.ndarray:
     """(path-wise gamma estimate) - (constant-realised-variance gamma estimate), as % of S0, per window.
 
     Zero on average when the variance of a window is spread evenly in time relative to where gamma is large.
@@ -246,18 +262,19 @@ def timing_effect(paths: np.ndarray, sigma_i: np.ndarray, r: float) -> np.ndarra
     return (e_path - e_const) / S0 * 100.0
 
 
-def _twin_paths(bt: Backtest, r: float, k: int = 0) -> np.ndarray:
+def _twin_paths(bt: Backtest, r, k: int = 0) -> np.ndarray:
     """One GBM path per real window with true vol = that window's realised vol (replicate k)."""
     W = bt.ws.window
     dt = 1.0 / cfg.TRADING_DAYS_PER_YEAR
     rng = make_rng(12, k)
     sig_r = bt.rv[:, None]
     Z = rng.standard_normal((len(bt.rv), W))
-    lr = (r - 0.5 * sig_r**2) * dt + sig_r * np.sqrt(dt) * Z
+    r_col = np.broadcast_to(np.asarray(r, dtype=float), (len(bt.rv),))[:, None]
+    lr = (r_col - 0.5 * sig_r**2) * dt + sig_r * np.sqrt(dt) * Z
     return 100.0 * np.exp(np.concatenate([np.zeros((len(bt.rv), 1)), np.cumsum(lr, axis=1)], axis=1))
 
 
-def twin_volatility_comparison(ws: rd.WindowSet, bt: Backtest, r: float = cfg.RISK_FREE_RATE_B,
+def twin_volatility_comparison(ws: rd.WindowSet, bt: Backtest, r=None,
                                twin_reps: int = 20) -> tuple[pd.DataFrame, dict]:
     """Compare the GBM twin's volatilities with the historical ones, and say what the twin does and does not match.
 
@@ -267,6 +284,7 @@ def twin_volatility_comparison(ws: rd.WindowSet, bt: Backtest, r: float = cfg.RI
     the historical realised vols; it does not reproduce the historical realised-vol regressor window by window.
     Uses the same random streams as ``gbm_benchmarks`` (so the twin regression below equals the benchmark row).
     """
+    r = bt.r if r is None else r
     W = ws.window
     T = W / cfg.TRADING_DAYS_PER_YEAR
     times = np.arange(W + 1) / cfg.TRADING_DAYS_PER_YEAR
@@ -377,13 +395,14 @@ def _fit_row(est: np.ndarray, pnl: np.ndarray) -> dict:
                 rmse_pct=float(np.sqrt((err**2).mean()) * 100), rmse_over_std_pnl=float(np.sqrt((err**2).mean()) / pnl.std(ddof=1)))
 
 
-def estimator_conventions(ws: rd.WindowSet, bt: Backtest, crash: np.ndarray, r: float = cfg.RISK_FREE_RATE_B) -> pd.DataFrame:
+def estimator_conventions(ws: rd.WindowSet, bt: Backtest, crash: np.ndarray, r=None) -> pd.DataFrame:
     """Sensitivity of the gamma-PnL approximation to how realised variance is defined.
 
     For each convention, the discrete gamma estimate is compared with the actual hedging PnL on (a) all real
     windows, (b) real windows excluding the 2020 crash windows, and (c) a GBM twin (one simulated path per real
     window; returns exactly lognormal, so the only error is the discretisation).
     """
+    r = bt.r if r is None else r
     W = ws.window
     T = W / cfg.TRADING_DAYS_PER_YEAR
     times = np.arange(W + 1) / cfg.TRADING_DAYS_PER_YEAR
@@ -465,25 +484,26 @@ def run_part_b(save: bool = True) -> dict:
     freq["c_fitted"] = c_fit
 
     # ---- sensitivities
-    sens_rows = []
+    r_mean = float(np.mean(bt.r))                       # mean T-bill rate over the sample (decimal)
+    sens_rows = [dict(_row(BASELINE_RATE_LABEL, bt), risk_free=r_mean)]
     for r in cfg.RISK_FREE_SENSITIVITY_B:
         b = run_backtest(ws, r=r)
-        row = _row(f"risk-free {r:.0%}", b)
+        row = _row(f"constant risk-free {r:.0%}", b)
         row["risk_free"] = r
         sens_rows.append(row)
     centred = run_backtest(ws, centred_rv=True)
-    sens_rows.append(dict(_row("realised vol = sample std (centred)", centred), risk_free=cfg.RISK_FREE_RATE_B))
-    sens_rows.append(dict(_row("excluding Feb 20 - Apr 30 2020 windows", bt, ~crash), risk_free=cfg.RISK_FREE_RATE_B))
+    sens_rows.append(dict(_row("realised vol = sample std (centred)", centred), risk_free=r_mean))
+    sens_rows.append(dict(_row("excluding Feb 20 - Apr 30 2020 windows", bt, ~crash), risk_free=r_mean))
     data_nw = rd.load_all(drop_weekend_sessions=True)
     ws_nw = rd.build_windows(data_nw)
     bt_nw = run_backtest(ws_nw)
-    sens_rows.append(dict(_row("weekend sessions dropped", bt_nw), risk_free=cfg.RISK_FREE_RATE_B))
+    sens_rows.append(dict(_row("weekend sessions dropped", bt_nw), risk_free=float(np.mean(bt_nw.r))))
     sens = pd.DataFrame(sens_rows)
-    base = sens.loc[sens["group"] == f"risk-free {cfg.RISK_FREE_RATE_B:.0%}"].iloc[0]
+    base = sens.loc[sens["group"] == BASELINE_RATE_LABEL].iloc[0]
     rate_rows = []
-    for r in cfg.RISK_FREE_SENSITIVITY_B:
-        row = sens.loc[sens["group"] == f"risk-free {r:.0%}"].iloc[0]
-        rate_rows.append(dict(risk_free=r,
+    for label in [BASELINE_RATE_LABEL] + [f"constant risk-free {r:.0%}" for r in cfg.RISK_FREE_SENSITIVITY_B]:
+        row = sens.loc[sens["group"] == label].iloc[0]
+        rate_rows.append(dict(rate=label.replace("constant risk-free ", "constant "), risk_free=row["risk_free"],
                               **{c: row[c] for c in ("mean_pnl_pct", "std_pnl_pct", "frac_profit", "slope", "r2")},
                               **{f"diff_{c}": row[c] - base[c] for c in ("mean_pnl_pct", "std_pnl_pct", "frac_profit", "slope", "r2")}))
     rate_sens = pd.DataFrame(rate_rows)
@@ -529,14 +549,16 @@ def run_part_b(save: bool = True) -> dict:
     ok = np.isfinite(sig_path).all(axis=1)
     ws_ok = rd.WindowSet(t0=ws.t0[ok], t_end=ws.t_end[ok], paths=ws.paths[ok], sigma_implied=ws.sigma_implied[ok],
                          vix_pct=ws.vix_pct[ok], calendar_days=ws.calendar_days[ok], window=W,
-                         n_excluded_long_span=0)
+                         n_excluded_long_span=0, r=None if ws.r is None else ws.r[ok],
+                         tbill_yield_pct=None if ws.tbill_yield_pct is None else ws.tbill_yield_pct[ok],
+                         rate_stale_days=None if ws.rate_stale_days is None else ws.rate_stale_days[ok])
     bt_fixed = run_backtest(ws_ok)
     bt_vix = run_backtest(ws_ok, sigma_hedge=sig_path[ok])
     stretch = pd.DataFrame([dict(hedger="fixed initial VIX (baseline)", **{k: v for k, v in _row("", bt_fixed).items() if k != "group"}),
                             dict(hedger="re-hedge with each day's VIX", **{k: v for k, v in _row("", bt_vix).items() if k != "group"})])
 
-    t_real = timing_effect(ws.paths, ws.sigma_implied, cfg.RISK_FREE_RATE_B)
-    t_twin = timing_effect(_twin_paths(bt, cfg.RISK_FREE_RATE_B), ws.sigma_implied, cfg.RISK_FREE_RATE_B)
+    t_real = timing_effect(ws.paths, ws.sigma_implied, bt.r)
+    t_twin = timing_effect(_twin_paths(bt, bt.r), ws.sigma_implied, bt.r)
     timing = {name: dict(all=float(t.mean()), crash=float(t[crash].mean()), non_crash=float(t[~crash].mean()))
               for name, t in (("real", t_real), ("gbm_twin", t_twin))}
     gw = dict(all=float(bt.slope_theory.mean()), crash=float(bt.slope_theory[crash].mean()),
@@ -546,6 +568,15 @@ def run_part_b(save: bool = True) -> dict:
         timing_effect_pct_of_S0=timing, gamma_weight_slope_by_group=gw,
         windows=M, first_t0=str(ws.t0[0].date()), last_t0=str(ws.t0[-1].date()), last_end=str(ws.t_end[-1].date()),
         window_trading_days=W, risk_free=cfg.RISK_FREE_RATE_B, risk_free_is_placeholder=cfg.RISK_FREE_IS_PLACEHOLDER,
+        rate_baseline=dict(source=cfg.RISK_FREE_SOURCE_B, mean_rate_pct=float(np.mean(bt.r)) * 100,
+                           min_rate_pct=float(np.min(bt.r)) * 100, max_rate_pct=float(np.max(bt.r)) * 100,
+                           mean_yield_pct=float(np.mean(ws.tbill_yield_pct)),
+                           first_auction=str(data.tbill.index[0].date()), last_auction=str(data.tbill.index[-1].date()),
+                           auctions=int(len(data.tbill)),
+                           stale_days_max=int(ws.rate_stale_days.max()),
+                           windows_stale_over_28_days=int((ws.rate_stale_days > rates.FLAG_STALE_DAYS).sum()),
+                           first_stale_window=(str(ws.t0[ws.rate_stale_days > rates.FLAG_STALE_DAYS][0].date())
+                                               if (ws.rate_stale_days > rates.FLAG_STALE_DAYS).any() else None)),
         calendar_days_min=int(ws.calendar_days.min()), calendar_days_max=int(ws.calendar_days.max()),
         crash_windows=int(crash.sum()), data_report=data.report,
         headline=dict(**head, r2_block_bootstrap_ci=[r2_lo, r2_hi], r2_block_bootstrap_median=r2_med,
@@ -578,7 +609,8 @@ def run_part_b(save: bool = True) -> dict:
         cfg.RESULTS_DIR.mkdir(exist_ok=True)
         pd.DataFrame(dict(t0=ws.t0, t_end=ws.t_end, vix_pct=ws.vix_pct, sigma_implied=ws.sigma_implied,
                           realised_vol=bt.rv, variance_gap=bt.gap, premium_pct=bt.premium * 100, pnl_pct=bt.pnl * 100,
-                          gamma_estimate_pct=bt.est * 100, covid_crash_window=crash)).to_csv(
+                          gamma_estimate_pct=bt.est * 100, covid_crash_window=crash,
+                          tbill_yield_pct=ws.tbill_yield_pct, risk_free_rate=bt.r, rate_stale_days=ws.rate_stale_days)).to_csv(
             cfg.RESULTS_DIR / "partB_windows.csv", index=False)
         freq.to_csv(cfg.RESULTS_DIR / "partB_frequency.csv", index=False)
         sens.to_csv(cfg.RESULTS_DIR / "partB_sensitivity.csv", index=False)

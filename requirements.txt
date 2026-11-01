@@ -4,3 +4,4 @@ pandas>=2.0,<4
 scipy>=1.10,<2
 matplotlib>=3.7,<4
 pytest>=7.0,<10
+openpyxl>=3.1,<4        # only to rebuild data/raw/RBI_91day_tbill_auctions.csv from the RBI spreadsheets (python -m src.rates)

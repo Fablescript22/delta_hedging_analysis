@@ -18,18 +18,18 @@
     "mean_on_gap_slope": 95.10986016953063,
     "mean_on_gap_slope_se": 6.725011044973259,
     "mean_on_gap_r2": 0.9756116784584394,
-    "pooled_pnl_on_gaphat_slope": 94.7749072450786,
-    "pooled_pnl_on_gaphat_slope_se": 0.10876906703112794,
-    "pooled_pnl_on_gaphat_intercept": 0.3260085470212148,
-    "pooled_pnl_on_gaphat_r2": 0.8443138994879268,
+    "pooled_pnl_on_gaphat_slope": 94.77490724507857,
+    "pooled_pnl_on_gaphat_slope_se": 0.1087690670311281,
+    "pooled_pnl_on_gaphat_intercept": 0.3260085470212147,
+    "pooled_pnl_on_gaphat_r2": 0.8443138994879263,
     "r2_pnl_vs_gamma_estimate_pathwise": 0.9989813533917431,
     "r2_pnl_vs_gamma_estimate_constvar": 0.9888433784459433,
     "n_pooled": 140000,
     "n_steps": 250,
     "gaphat_std_pooled": 0.0250029553959983,
     "gaphat_std_within_mean": 0.003896467905524719,
-    "within_r2_min": 0.03348682986284818,
-    "within_r2_max": 0.638428183132636
+    "within_r2_min": 0.033486829862848164,
+    "within_r2_max": 0.6384281831326359
   },
   "a6_rmse_loglog_slope": -0.7295342096249013
 }

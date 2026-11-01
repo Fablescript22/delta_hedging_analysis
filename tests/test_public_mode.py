@@ -83,6 +83,8 @@ from src import make_public as mp  # noqa: E402
 def test_exclusion_rules():
     assert mp.excluded("data/raw/NIFTY 50_Historical_PR_01012016to31122016.csv")
     assert mp.excluded("data/raw/hist_india_vix_-01-01-2016-to-31-12-2016.csv")
+    assert mp.excluded("data/raw/RBI_91day_tbill_auctions.csv")
+    assert mp.excluded("data/raw/rbi_xlsx/rbi_hbsie_91day_tbill_auctions_20180704_20190724.xlsx")
     assert mp.excluded("results/partB_windows.csv")
     assert mp.excluded("src/__pycache__/x.pyc") and mp.excluded(".venv/lib/x.py") and mp.excluded(".git/config")
     for kept in ("data/raw/MANIFEST.json", "data/raw/SOURCES.md", "results/partB_summary.json", "src/backtest.py",
@@ -94,6 +96,7 @@ def test_make_public_copies_everything_except_the_excluded_files(tmp_path):
     dest = mp.make_public(tmp_path / "pub")
     rel = {p.relative_to(dest).as_posix() for p in dest.rglob("*") if p.is_file()}
     assert not [r for r in rel if r.endswith(".csv") and r.startswith("data/")]
+    assert not [r for r in rel if r.lower().endswith(".xlsx") or "rbi_xlsx" in r]
     assert "results/partB_windows.csv" not in rel
     assert {"data/raw/MANIFEST.json", "data/raw/SOURCES.md", "src/make_public.py", "README.md", ".gitignore",
             ".github/workflows/ci.yml", "docs/RESEARCH_REPORT.md", "results/partB_summary.json"} <= rel

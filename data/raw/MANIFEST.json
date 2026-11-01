@@ -90,6 +90,14 @@
       "last_date": "2026-10-16"
     },
     {
+      "file": "RBI_91day_tbill_auctions.csv",
+      "bytes": 40646,
+      "sha256": "c90b366dd05517a561f3219234a1b6c4bd41810c7999485c69a6edac4e1b4ef1",
+      "rows": 564,
+      "first_date": "2015-07-02",
+      "last_date": "2026-06-24"
+    },
+    {
       "file": "hist_india_vix_-01-01-2016-to-31-12-2016.csv",
       "bytes": 14674,
       "sha256": "a4be8f58fdeefd0937b60e408590b5ca559919ddab6d932bae8d4ed6827774d5",

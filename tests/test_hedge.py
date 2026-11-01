@@ -188,3 +188,46 @@ def test_rebalance_idx_accepts_ints_numpy_ints_and_whole_floats():
 def test_rebalance_idx_non_iterable_rejected():
     with pytest.raises(ValueError):
         hedge_pnl(_paths(n=50), 100.0, 0.2, 0.05, 1.0, rebalance_idx=5)
+
+
+# ---------------------------------------------------------------- per-path risk-free rate
+def _gbm(m=40, n=21, seed=3, sigma=0.2):
+    rng = np.random.default_rng(seed)
+    return 100.0 * np.exp(np.cumsum(np.concatenate([np.zeros((m, 1)), sigma * np.sqrt(1 / 252) * rng.standard_normal((m, n))], axis=1), axis=1))
+
+
+def test_per_path_rate_equals_running_each_path_alone():
+    P = _gbm()
+    r = np.linspace(0.02, 0.08, len(P))
+    both = hedge_pnl(P, 100.0, 0.2, r, 21 / 252)
+    for i in (0, 7, 23, 39):
+        one = hedge_pnl(P[i:i + 1], 100.0, 0.2, r[i], 21 / 252)
+        assert both.pnl[i] == pytest.approx(one.pnl[0], abs=1e-12)
+        assert both.premium[i] == pytest.approx(one.premium[0], abs=1e-12)
+
+
+def test_constant_array_rate_equals_scalar_rate():
+    P = _gbm()
+    a = hedge_pnl(P, 100.0, 0.2, 0.05, 21 / 252, cost_rate=0.001)
+    b = hedge_pnl(P, 100.0, 0.2, np.full(len(P), 0.05), 21 / 252, cost_rate=0.001)
+    assert np.array_equal(a.pnl, b.pnl) and np.array_equal(a.total_cost, b.total_cost)
+    e1 = gamma_pnl_estimate(P, 100.0, 0.2, 0.05, 21 / 252)
+    e2 = gamma_pnl_estimate(P, 100.0, 0.2, np.full(len(P), 0.05), 21 / 252)
+    assert np.array_equal(e1, e2)
+
+
+def test_per_path_rate_validated():
+    P = _gbm()
+    with pytest.raises(ValueError, match="one entry per path"):
+        hedge_pnl(P, 100.0, 0.2, np.full(len(P) - 1, 0.05), 21 / 252)
+    with pytest.raises(ValueError, match="finite"):
+        hedge_pnl(P, 100.0, 0.2, np.where(np.arange(len(P)) == 3, np.nan, 0.05), 21 / 252)
+    with pytest.raises(ValueError, match="one entry per path"):
+        gamma_pnl_estimate(P, 100.0, 0.2, np.full(len(P) + 2, 0.05), 21 / 252)
+
+
+def test_higher_rate_raises_premium_of_a_call():
+    P = _gbm()
+    lo = hedge_pnl(P, 100.0, 0.2, np.full(len(P), 0.02), 21 / 252).premium
+    hi = hedge_pnl(P, 100.0, 0.2, np.full(len(P), 0.08), 21 / 252).premium
+    assert np.all(hi > lo)

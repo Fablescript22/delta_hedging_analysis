@@ -19,7 +19,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW, RES = ROOT / "data" / "raw", ROOT / "results"
-R, W, DAYS = 0.06, 21, 252.0            # Part B constants (README: 6% placeholder, 21-day windows, 252 days/yr)
+W, DAYS = 21, 252.0                     # Part B constants (21-day windows, 252 days/yr); the rate is per window, see _read_tbill
 
 _RAW_PRESENT = bool(list(RAW.glob("*.csv")))
 needs_results = pytest.mark.skipif(
@@ -53,8 +53,25 @@ def _read_vix():
     return out
 
 
-def _short_call_pnl(path, sigma):
-    """Scalar daily delta hedge of one short ATM call; returns PnL at maturity in money."""
+def _read_tbill():
+    """(sorted auction dates, implicit yields in percent) from the flattened RBI file, standard library only."""
+    with open(RAW / "RBI_91day_tbill_auctions.csv", newline="") as fh:
+        rows = sorted((datetime.strptime(r["Date"], "%Y-%m-%d").date(), float(r["Cutoff_Yield_Percent"]))
+                      for r in csv.DictReader(fh))
+    return [d for d, _ in rows], [y for _, y in rows]
+
+
+def _rate_asof(t0, dates, yields):
+    """Continuously compounded rate from the latest auction on or before t0 (written out, no project code)."""
+    import bisect
+    i = bisect.bisect_right(dates, t0) - 1
+    assert i >= 0
+    y = yields[i] / 100.0
+    return (365.0 / 91.0) * math.log(1.0 + y * 91.0 / 365.0), yields[i], (t0 - dates[i]).days
+
+
+def _short_call_pnl(path, sigma, R):
+    """Scalar daily delta hedge of one short ATM call at continuously compounded rate R; PnL at maturity in money."""
     K, T = path[0], W / DAYS
 
     def d1(s, tau):
@@ -74,6 +91,7 @@ def _short_call_pnl(path, sigma):
 @pytest.fixture(scope="module")
 def rebuilt():
     nifty, vix = _read_nifty(), _read_vix()
+    ad, ay = _read_tbill()
     dates = list(nifty)
     closes = [nifty[d] for d in dates]
     rows = []
@@ -82,9 +100,10 @@ def rebuilt():
         if t0 not in vix or (tend - t0).days > 45:
             continue
         path = closes[i:i + W + 1]
-        pnl = _short_call_pnl(path, vix[t0] / 100.0) / path[0] * 100.0
+        rate, yld, stale = _rate_asof(t0, ad, ay)
+        pnl = _short_call_pnl(path, vix[t0] / 100.0, rate) / path[0] * 100.0
         rv = math.sqrt(DAYS / W * sum(math.log(path[j + 1] / path[j]) ** 2 for j in range(W)))
-        rows.append((t0.isoformat(), tend.isoformat(), vix[t0], rv, pnl))
+        rows.append((t0.isoformat(), tend.isoformat(), vix[t0], rv, pnl, rate, yld, stale))
     return rows
 
 
@@ -105,6 +124,8 @@ def test_every_saved_window_matches_independent_loop(rebuilt, saved):
     rv_ind = np.array([r[3] for r in rebuilt])
     assert np.max(np.abs(pnl_saved - pnl_ind)) < 1e-8          # percent of S0
     assert np.max(np.abs(rv_saved - rv_ind)) < 1e-12
+    for col, k in (("risk_free_rate", 5), ("tbill_yield_pct", 6), ("rate_stale_days", 7)):    # the rate itself, rebuilt independently
+        assert np.max(np.abs(np.array([float(s[col]) for s in saved]) - np.array([r[k] for r in rebuilt]))) < 1e-9
 
 
 @needs_results

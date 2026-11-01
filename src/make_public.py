@@ -21,7 +21,8 @@ from . import config as cfg
 
 # paths (relative to the project root, forward slashes) that never go into the public copy
 EXCLUDE_GLOBS = (
-    "data/raw/*.csv",                  # NSE / niftyindices source files (terms of use)
+    "data/raw/*.csv",                  # NSE / niftyindices source files and the RBI T-bill file (terms of use)
+    "data/raw/rbi_xlsx/*",             # the RBI spreadsheets it is built from
     "results/partB_windows.csv",       # holds the India VIX level of every date
     "results/test_run.json",           # rewritten below by a test run of the public copy
     ".git/*", ".venv/*", "venv/*", "env/*", ".pytest_cache/*", ".mypy_cache/*", ".ruff_cache/*",
@@ -32,7 +33,8 @@ REGENERATE = ("data_dictionary", "gallery", "docs")      # "docs" is run a secon
 
 
 def excluded(rel: str) -> bool:
-    return any(fnmatch.fnmatch(rel, g) or fnmatch.fnmatch(rel.split("/")[-1], g) for g in EXCLUDE_GLOBS)
+    rel = rel.lower()
+    return any(fnmatch.fnmatch(rel, g.lower()) or fnmatch.fnmatch(rel.split("/")[-1], g.lower()) for g in EXCLUDE_GLOBS)
 
 
 def files_to_copy(root: Path) -> list[Path]:

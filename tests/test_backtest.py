@@ -78,8 +78,11 @@ def test_part_b_internal_consistency(part_b):
     assert s["windows"] == len(out["ws"].t0) == len(out["bt"].pnl)
     assert 0 <= s["headline"]["r2"] <= 1
     rate = out["rate_sens"]
-    assert rate.loc[rate.risk_free == cfg.RISK_FREE_RATE_B, "diff_mean_pnl_pct"].item() == 0.0
-    assert set(rate.risk_free) == set(cfg.RISK_FREE_SENSITIVITY_B)
+    base = rate.loc[rate.rate == "RBI 91-day T-bill (baseline)"]
+    assert len(base) == 1 and base["diff_mean_pnl_pct"].item() == 0.0              # the baseline is the reference
+    assert set(rate.loc[rate.rate != "RBI 91-day T-bill (baseline)", "risk_free"]) == set(cfg.RISK_FREE_SENSITIVITY_B)
+    assert base["risk_free"].item() == pytest.approx(float(np.mean(out["bt"].r)))
+    assert s["rate_baseline"]["auctions"] > 500 and s["rate_baseline"]["stale_days_max"] <= 120
     f = out["freq"]
     assert list(f.interval_days) == list(b.FREQ_INTERVALS) and f.std_diff_vs_daily_pct.iloc[0] == 0.0
     assert (np.diff(f.std_pnl_pct) > 0).all()          # coarser hedging never narrows the spread here

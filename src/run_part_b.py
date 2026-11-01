@@ -12,7 +12,7 @@ def main() -> None:
     paths = [plots.fig_b_vix_vs_rv(out), plots.fig_b_regression(out), plots.fig_b_frequency(out),
              plots.fig_b_effect_sizes(out), plots.fig_b_market_states(out), plots.fig_b_estimators(out),
              plots.fig_b_chronological(out), plots.fig_b_frictions(out)]
-    print(f"{len(out['ws'].t0)} windows; risk-free {cfg.RISK_FREE_RATE_B:.0%} (placeholder={cfg.RISK_FREE_IS_PLACEHOLDER}). Figures:")
+    print(f"{len(out['ws'].t0)} windows; risk-free: RBI 91-day T-bill. Figures:")
     for p in paths:
         print("  ", p)
 

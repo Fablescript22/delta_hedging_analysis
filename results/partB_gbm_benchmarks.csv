@@ -1,3 +1,3 @@
 benchmark,observations,slope,r2,mean_pnl_pct,std_pnl_pct,sigma_i,sigma_r
-"constant GBM (sigma_i = mean VIX, sigma_r = mean realised vol)",40000,0.40896751956794164,0.613916173844669,0.28906942350640136,0.3138937399234818,0.16475123621148724,0.1394074209955448
-"GBM twin, conditional on historical realised vol (sigma_i = VIX_t0; true vol of each path = that window's historical realised vol)",52580,0.12022962352013575,0.6168106289199589,0.29254899487804253,0.8999804709702504,,
+"constant GBM (sigma_i = mean VIX, sigma_r = mean realised vol)",40000,0.4092350588737135,0.61422624697719,0.289278202129444,0.3139978945868034,0.16475123621148724,0.1394074209955448
+"GBM twin, conditional on historical realised vol (sigma_i = VIX_t0; true vol of each path = that window's historical realised vol)",52580,0.12030139889030805,0.6168852539920942,0.2926491824289443,0.9004883384541383,,

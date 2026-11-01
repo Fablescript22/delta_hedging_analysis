@@ -31,12 +31,13 @@ REBAL_EVERY = (1, 2, 5, 10)
 DELTA_STEPS = (0.01, 0.05, 0.10)
 
 
-def friction_pnl(ws: rd.WindowSet, *, r: float = cfg.RISK_FREE_RATE_B, cost_bps: float = 0.0,
+def friction_pnl(ws: rd.WindowSet, *, r=None, cost_bps: float = 0.0,
                  opt_half_spread_vol: float = 0.0, rebalance_every: int = 1, delta_step: float | None = None):
     """Hedging PnL (fraction of S0) per window and mean turnover (sum of |delta changes|, in option notionals)."""
     if cost_bps < 0 or opt_half_spread_vol < 0:
         raise ValueError("cost_bps and opt_half_spread_vol must be non-negative")
     W = ws.window
+    r = ws.r if r is None and ws.r is not None else (cfg.RISK_FREE_RATE_B if r is None else r)
     T = W / cfg.TRADING_DAYS_PER_YEAR
     times = np.arange(W + 1) / cfg.TRADING_DAYS_PER_YEAR
     S0 = ws.paths[:, 0]

@@ -384,21 +384,22 @@ Part B: regression on each of the 21 non-overlapping subsamples. 21 rows.
 
 ### `partB_rate_sensitivity.csv`
 
-Part B: effect of the risk-free rate (4%, 6%, 8%) relative to the 6% placeholder. 3 rows.
+Part B: effect of the risk-free rate (4%, 6%, 8%) relative to the 6% placeholder. 4 rows.
 
 | column | meaning |
 |---|---|
-| `risk_free` | risk-free rate, decimal |
+| `rate` | which rate: the RBI 91-day T-bill baseline, or a constant |
+| `risk_free` | risk-free rate, decimal (for the T-bill baseline, its mean over the sample) |
 | `mean_pnl_pct` | mean hedging PnL, % of S0 (initial index level) per window |
 | `std_pnl_pct` | standard deviation of PnL, % of S0 |
 | `frac_profit` | share of windows with PnL > 0 |
 | `slope` | slope of PnL on variance gap at this rate |
 | `r2` | R-squared of PnL on variance gap at this rate |
-| `diff_mean_pnl_pct` | mean PnL minus the 6% value, percentage points |
-| `diff_std_pnl_pct` | std minus the 6% value, pp |
-| `diff_frac_profit` | share profitable minus the 6% value |
-| `diff_slope` | slope minus the 6% value |
-| `diff_r2` | R-squared minus the 6% value |
+| `diff_mean_pnl_pct` | mean PnL minus the T-bill baseline value, percentage points |
+| `diff_std_pnl_pct` | std minus the T-bill baseline value, pp |
+| `diff_frac_profit` | share profitable minus the T-bill baseline value |
+| `diff_slope` | slope minus the T-bill baseline value |
+| `diff_r2` | R-squared minus the T-bill baseline value |
 
 ### `partB_regimes.csv`
 
@@ -420,7 +421,7 @@ Part B: results by VIX regime at window start (calm / middle / turbulent) and fo
 
 ### `partB_sensitivity.csv`
 
-Part B: headline statistics under alternative assumptions (rate, centred vol, exclusions). 6 rows.
+Part B: headline statistics under alternative assumptions (rate, centred vol, exclusions). 7 rows.
 
 | column | meaning |
 |---|---|
@@ -435,7 +436,7 @@ Part B: headline statistics under alternative assumptions (rate, centred vol, ex
 | `slope` | slope of PnL (fraction of S0) on variance gap |
 | `se_slope_hac` | Newey-West standard error of the slope |
 | `r2` | R-squared |
-| `risk_free` | risk-free rate, decimal |
+| `risk_free` | risk-free rate, decimal (for the T-bill baseline, its mean over the sample) |
 
 ### `partB_stretch_vix_rehedge.csv`
 
@@ -489,6 +490,9 @@ One row per 21-trading-day window of real data: inputs, outcome, estimator. The 
 | `pnl_pct` | hedging PnL, % of S0, undiscounted at the window end |
 | `gamma_estimate_pct` | discrete path-wise gamma-PnL approximation, % of S0 |
 | `covid_crash_window` | True if the window overlaps 20 Feb - 30 Apr 2020 |
+| `tbill_yield_pct` | RBI 91-day T-bill auction cut-off yield in force at t0, percent (actual/365) |
+| `risk_free_rate` | continuously compounded risk-free rate used for this window, decimal = (365/91) ln(1 + y 91/365) |
+| `rate_stale_days` | days between t0 and the T-bill auction the rate comes from |
 
 ### `partB_yearly.csv`
 

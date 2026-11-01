@@ -17,10 +17,11 @@ def test_shipped_raw_data_matches_manifest():
     assert ig.verify() == []
 
 
-def test_manifest_covers_all_22_files_with_sane_metadata():
+def test_manifest_covers_all_23_files_with_sane_metadata():
     m = json.loads(ig.MANIFEST.read_text())["files"]
-    assert len(m) == 22 and len({f["file"] for f in m}) == 22
-    assert sum(f["rows"] for f in m) == 5326
+    assert len(m) == 23 and len({f["file"] for f in m}) == 23           # 11 NIFTY + 11 India VIX + the RBI T-bill file
+    assert sum(f["rows"] for f in m if not f["file"].startswith("RBI_")) == 5326
+    assert [f["rows"] for f in m if f["file"].startswith("RBI_")] == [564]
     assert all(len(f["sha256"]) == 64 for f in m)
 
 

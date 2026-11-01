@@ -105,8 +105,12 @@ COLUMNS = {
     "slope_ci_low": "slope - 1.96 SE", "slope_ci_high": "slope + 1.96 SE", "regime": "market state at window start", "share": "share of labelled windows",
     "mean_pnl_ci_lo": "mean PnL - 1.96 HAC SE, % of S0", "mean_pnl_ci_hi": "mean PnL + 1.96 HAC SE, % of S0", "worst_pnl_pct": "smallest PnL in the group, % of S0",
     "vol_gap_points": "mean(VIX - realised vol), vol points", "slope_se_hac": "Newey-West standard error of the slope", "offset": "start offset (0..20) of the non-overlapping subsample",
-    "risk_free": "risk-free rate, decimal", "diff_mean_pnl_pct": "mean PnL minus the 6% value, percentage points", "diff_std_pnl_pct": "std minus the 6% value, pp",
-    "diff_frac_profit": "share profitable minus the 6% value", "diff_slope": "slope minus the 6% value", "diff_r2": "R-squared minus the 6% value", "group": "label of the subset",
+    "risk_free": "risk-free rate, decimal (for the T-bill baseline, its mean over the sample)", "rate": "which rate: the RBI 91-day T-bill baseline, or a constant",
+    "diff_mean_pnl_pct": "mean PnL minus the T-bill baseline value, percentage points", "diff_std_pnl_pct": "std minus the T-bill baseline value, pp",
+    "diff_frac_profit": "share profitable minus the T-bill baseline value", "diff_slope": "slope minus the T-bill baseline value", "diff_r2": "R-squared minus the T-bill baseline value",
+    "tbill_yield_pct": "RBI 91-day T-bill auction cut-off yield in force at t0, percent (actual/365)",
+    "risk_free_rate": "continuously compounded risk-free rate used for this window, decimal = (365/91) ln(1 + y 91/365)",
+    "rate_stale_days": "days between t0 and the T-bill auction the rate comes from", "group": "label of the subset",
     "median_pnl_pct": "median PnL, % of S0", "se_slope_hac": "Newey-West standard error of the slope", "hedger": "which hedger", "estimator": "realised-volatility estimator",
     "mean_vol_gap_points": "mean(VIX - estimator), vol points", "se_vol_gap_hac": "Newey-West SE of that mean", "frac_rv_below_vix": "share of windows with estimator below VIX",
     "corr_with_close_to_close": "correlation with the baseline close-to-close estimate", "slope_t": "slope / HAC SE",
@@ -149,7 +153,7 @@ def describe(file: str, col: str) -> str | None:
 
 WINDOWS_FILE = "partB_windows.csv"
 WINDOWS_COLUMNS = ("t0", "t_end", "vix_pct", "sigma_implied", "realised_vol", "variance_gap", "premium_pct", "pnl_pct",
-                   "gamma_estimate_pct", "covid_crash_window")      # must equal the columns written by backtest.run_part_b
+                   "gamma_estimate_pct", "covid_crash_window", "tbill_yield_pct", "risk_free_rate", "rate_stale_days")      # must equal the columns written by backtest.run_part_b
 
 
 def results_files() -> list[Path]:

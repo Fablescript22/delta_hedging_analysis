@@ -38,13 +38,14 @@ def _md(df: pd.DataFrame, cols: list[tuple[str, str, str]]) -> str:
     return "\n".join([head, sep] + rows)
 
 
-RAW_HERE = "untouched CSV downloads + SOURCES.md + MANIFEST.json (SHA-256 integrity manifest)"
+RAW_HERE = "untouched CSV downloads, the RBI T-bill file and its source spreadsheets, SOURCES.md + MANIFEST.json (SHA-256 integrity manifest)"
 RAW_ABSENT = "SOURCES.md + MANIFEST.json (SHA-256 manifest); the CSV files are not in the public repository"
 GET_DATA = (
-    "**Getting the data.** The public repository does not include the raw NIFTY 50 and India VIX files, because their publishers' "
-    "terms restrict redistribution. Download them yourself (links, file layout and known problems are in "
-    "[data/raw/SOURCES.md](data/raw/SOURCES.md)), put the 22 CSV files in `data/raw/`, and run `python -m src check-data`: it compares "
-    "them with a SHA-256 manifest and tells you whether they are the files these results came from. Without the files, the tests and "
+    "**Getting the data.** The public repository does not include the raw NIFTY 50 and India VIX files or the RBI Treasury-bill "
+    "tables, because their publishers' terms restrict or do not clearly allow redistribution. Download them yourself (links, file "
+    "layout and known problems are in [data/raw/SOURCES.md](data/raw/SOURCES.md)): put the 22 NIFTY 50 / India VIX CSV files in "
+    "`data/raw/`, put the RBI spreadsheets in `data/raw/rbi_xlsx/` and run `python -m src.rates` to build the T-bill file, then run "
+    "`python -m src check-data`: it compares everything with a SHA-256 manifest and tells you whether they are the files these results came from. Without the files, the tests and "
     "stages that need them are skipped or stop with this message, and everything that only needs the committed results (the "
     "README, report, figures gallery, data dictionary and the Part A experiments) still works.")
 
@@ -175,7 +176,7 @@ This is the full report behind the [README](../README.md). A self-initiated quan
 
 Part A is a controlled experiment on simulated geometric Brownian motion (GBM). Part B runs the same hedging procedure on {sb['windows']:,} rolling 21-trading-day windows of real NIFTY 50 history ({sb['first_t0']} to {sb['last_end']}).
 
-> **Read this first: one input is a placeholder.** The risk-free rate in Part B is a constant **{cfg.RISK_FREE_RATE_B:.0%}**, an unsourced assumption, not a sourced rate. A sensitivity check at 4% and 8% is reported below; it moves no conclusion.
+> **Read this first: the risk-free rate is sourced.** Part B uses the RBI 91-day Treasury-bill auction cut-off yield in force on each window's start date (mean {sb['rate_baseline']['mean_rate_pct']:.2f}%, range {sb['rate_baseline']['min_rate_pct']:.2f}% to {sb['rate_baseline']['max_rate_pct']:.2f}%, converted to a continuously compounded rate). It replaces an earlier unsourced constant of 6%; constant 4%, 6% and 8% are reported below as sensitivity cases and none moves a conclusion. The 91-day bill is a proxy for the financing rate, not an exact one (see Limitations).
 >
 > Every number in this report is read from a results file written by an actual run (`src/make_readme.py` builds this file from `results/`). Where Part B disagrees with the theory, the disagreement is reported in its own section.
 >
@@ -274,7 +275,7 @@ Part A uses seed {cfg.SEED}; every experiment draws from its own stream, so resu
 |---|---|---|---|
 | NIFTY 50 price-return index, daily OHLC (11 yearly files) | https://www.niftyindices.com/reports/historical-data | 17 Oct 2026 | {dr['first_date']} to 2026-10-16 ({dr['nifty_rows']:,} rows) |
 | India VIX, daily OHLC, quoted in percent (11 yearly files) | https://www.nseindia.com/reports-indices-historical-vix | 17 Oct 2026 | 2016-01-01 to 2026-10-16 ({dr['vix_rows']:,} rows) |
-| Risk-free rate | **Placeholder: constant {cfg.RISK_FREE_RATE_B:.0%} per year, unsourced assumption** | n/a | n/a |
+| Risk-free rate | RBI 91-day Treasury-bill auction cut-off yield (Handbook of Statistics on the Indian Economy, table "Auctions of 91-Day Government of India Treasury Bills"), latest auction on or before each window's start, converted to a continuously compounded rate; see `data/raw/SOURCES.md` | {sb['rate_baseline']['first_auction']} to {sb['rate_baseline']['last_auction']} ({sb['rate_baseline']['auctions']} weekly auctions) |
 
 {"The raw files are in `data/raw/`, unmodified, with `SOURCES.md`. The code never writes to that folder." if cfg.raw_data_available() else GET_DATA.replace("(links, file layout and known problems are in [data/raw/SOURCES.md](data/raw/SOURCES.md))", "(links, file layout and known problems are in `data/raw/SOURCES.md`)").replace("[data/raw/SOURCES.md](data/raw/SOURCES.md)", "`data/raw/SOURCES.md`")}
 
@@ -424,11 +425,11 @@ The simulated realised volatility is slightly wider than the historical one (sta
 
 {_md(sens, [("group", "variant", ""), ("windows", "windows", ".0f"), ("mean_pnl_pct", "mean PnL %", "+.4f"), ("std_pnl_pct", "std PnL %", ".4f"), ("slope", "slope", ".4f"), ("r2", "R²", ".4f")])}
 
-**Risk-free rate (4%, 6%, 8%), as requested.** Differences relative to the 6% placeholder:
+**Risk-free rate: the T-bill baseline against constant 4%, 6% and 8%.** Differences relative to the T-bill baseline:
 
-{_md(rate, [("risk_free", "risk-free", ".0%"), ("mean_pnl_pct", "mean PnL %", "+.4f"), ("diff_mean_pnl_pct", "difference in mean PnL (pp)", "+.4f"), ("diff_std_pnl_pct", "difference in std (pp)", "+.4f"), ("diff_frac_profit", "difference in share profitable", "+.4f"), ("slope", "slope", ".4f"), ("diff_slope", "difference in slope", "+.5f"), ("r2", "R²", ".4f"), ("diff_r2", "difference in R²", "+.4f")])}
+{_md(rate, [("rate", "rate", ""), ("risk_free", "mean rate", ".2%"), ("mean_pnl_pct", "mean PnL %", "+.4f"), ("diff_mean_pnl_pct", "difference in mean PnL (pp)", "+.4f"), ("diff_std_pnl_pct", "difference in std (pp)", "+.4f"), ("diff_frac_profit", "difference in share profitable", "+.4f"), ("slope", "slope", ".4f"), ("diff_slope", "difference in slope", "+.5f"), ("r2", "R²", ".4f"), ("diff_r2", "difference in R²", "+.4f")])}
 
-Moving the rate by two percentage points changes the mean PnL by at most {rate[['diff_mean_pnl_pct']].abs().max().iloc[0]:.4f} percentage points ({rate[['diff_mean_pnl_pct']].abs().max().iloc[0] / h['mean_pnl_pct'] * 100:.1f}% of the mean), the slope by at most {rate[['diff_slope']].abs().max().iloc[0]:.5f} and R² by at most {rate[['diff_r2']].abs().max().iloc[0]:.4f}. The placeholder rate does not matter for any conclusion here.
+Replacing the time-varying T-bill rate by any constant between 4% and 8% changes the mean PnL by at most {rate[['diff_mean_pnl_pct']].abs().max().iloc[0]:.4f} percentage points ({rate[['diff_mean_pnl_pct']].abs().max().iloc[0] / h['mean_pnl_pct'] * 100:.1f}% of the mean), the slope by at most {rate[['diff_slope']].abs().max().iloc[0]:.5f} and R² by at most {rate[['diff_r2']].abs().max().iloc[0]:.4f}. Over a one-month hedge the rate has a small effect, so the choice of rate does not matter for any conclusion here. For comparison, the earlier version of this project used a constant 6% (the "constant 6%" row): its headline mean PnL was {rate.loc[rate.rate == 'constant 6%', 'mean_pnl_pct'].iloc[0]:+.4f}% against {h['mean_pnl_pct']:+.4f}% now.
 
 Other checks: using the sample standard deviation to define realised volatility moves R² from {h['r2']:.3f} to {ce.r2:.3f}; dropping weekend special sessions leaves the slope at {nw.slope:.4f} and R² at {nw.r2:.4f} ({nw.windows} windows); dropping the 2020 crash windows lifts the slope to {ex.slope:.3f} and R² to {ex.r2:.2f} (mean PnL {ex.mean_pnl_pct:+.3f}%, standard deviation {ex.std_pnl_pct:.3f}%).
 
@@ -533,7 +534,7 @@ Mean seller PnL (% of S0 per window) by one-way cost and rebalancing interval, n
 - **A single index and a single sample.** Results lean on one extreme episode (2020) and on roughly 125 independent months.
 - **Real returns have fat tails and volatility clustering; GBM does not.** Part B is much noisier than Part A.
 - **The gamma-PnL decomposition is an approximation with daily data.** It is a continuous-time, first-order result; the path-wise estimate used here tracks the actual PnL with R² {cvr.loc[(D_ALL, C_LOG), 'r2']:.2f} on the real windows and {cvr.loc[(D_TWIN, C_LOG), 'r2']:.2f} on exactly lognormal 21-step windows. It is an empirical fit, not an exact accounting of the PnL.
-- **Placeholder risk-free rate** ({cfg.RISK_FREE_RATE_B:.0%}, unsourced), tested at 4% and 8%.
+- **Risk-free rate is a proxy.** The RBI 91-day Treasury-bill yield stands in for the seller's financing rate and is held constant over each window. The published table ends on {sb['rate_baseline']['last_auction']}, so the {sb['rate_baseline']['windows_stale_over_28_days']} windows that start after the first four weeks without an auction (from {sb['rate_baseline']['first_stale_window']}, up to {sb['rate_baseline']['stale_days_max']} days) carry forward the last published yield; constant rates from 4% to 8% are tested.
 - **Time convention.** The headline uses one trading day = 1/252 year and a window of 21/252 year, while 21 trading days span {sb['calendar_days_min']} to {sb['calendar_days_max']} calendar days and VIX is annualised on calendar time. The calendar-clock re-run (section 6) shows the conclusions do not depend on this, but the numbers do move slightly. PnL is measured at maturity, undiscounted.
 - **Data gaps.** December 2022 has no VIX; two stale VIX rows are treated as missing; the exchange holiday calendar could not be verified offline.
 - **Chronological validation is a discipline check, not a blind test.** The headline results were known when the split dates and market-state thresholds were fixed, each split has one test period of overlapping windows, and the models that are known when the option is sold (calibration mean, VIX, VIX against trailing volatility) show no usable out-of-sample skill; the high out-of-sample R² belongs to models that use the window's own path.
@@ -547,7 +548,7 @@ Mean seller PnL (% of S0 per window) by one-way cost and rebalancing interval, n
 These are the extensions that would most increase the real-world credibility of the project; none is attempted here because the inputs are missing, and nothing in this report substitutes for them. A concrete plan for the first milestone is in [OPTIONS_EXTENSION_PLAN.md](OPTIONS_EXTENSION_PLAN.md).
 
 1. Historical NIFTY option prices with contract specifications: compare actual option-implied volatility with India VIX, and replace the theoretical Black-Scholes option with a traded one.
-2. NIFTY futures prices: hedge with futures instead of the index, including the basis, carry and roll, with a sourced financing rate in place of the 6% placeholder.
+2. NIFTY futures prices: hedge with futures instead of the index, including the basis, carry and roll, with a financing rate consistent with the futures (the T-bill yield used now is only a proxy).
 3. Quoted bid-ask spreads, fee and tax schedules and contract lot sizes, to replace the round-number cost grid.
 
 ## 9. Validation
@@ -632,7 +633,7 @@ Sell an at-the-money call priced by Black-Scholes at the implied volatility; del
 ## What this does not show
 
 - **It is not a profitable options strategy.** The +{h['mean_pnl_pct']:.3f}% per window is the income of a theoretical Black-Scholes option priced from India VIX. There are **no option quotes**, **no futures hedge** (basis, carry, roll), and **no measured transaction costs, spreads or taxes** in the data. India VIX is a 30-day model-free measure built from options across strikes, not an at-the-money implied volatility, so the theoretical income is probably optimistic. Costs appear only as clearly labelled scenarios.
-- **A placeholder input.** The risk-free rate is a constant {cfg.RISK_FREE_RATE_B:.0%}, an unsourced assumption; results at 4% and 8% are reported and move no conclusion.
+- **A proxy input.** The risk-free rate is the RBI 91-day T-bill yield (mean {sb['rate_baseline']['mean_rate_pct']:.1f}%), not the seller's actual financing rate; constant rates from 4% to 8% are tested and move no conclusion.
 - **One index, one sample, one extreme episode.** About 125 independent months, with the March 2020 crash ({sb['crash_windows']} windows) driving much of the regression result.
 - **In one line:** an investigation of discrete delta-hedging error and of the relationship between theoretical hedging PnL and implied-versus-realised volatility, using Monte Carlo simulation and historical NIFTY 50 / India VIX data.
 
