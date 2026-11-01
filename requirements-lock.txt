@@ -1,0 +1,21 @@
+# Exact versions the test suite and every number in the README were produced with.
+# Python 3.13.16 on Linux. Use with: pip install -r requirements-lock.txt
+# (If you use a much newer Python, such as 3.15, binary wheels for these exact pins may not exist; use requirements.txt then.)
+colorama==0.4.6; sys_platform == "win32"
+contourpy==1.4.0
+cycler==0.12.1
+fonttools==4.65.0
+iniconfig==2.3.1
+kiwisolver==1.5.1
+matplotlib==3.11.2
+numpy==2.5.3
+packaging==26.3
+pandas==3.0.5
+pillow==12.3.0
+pluggy==1.7.0
+Pygments==2.21.0
+pyparsing==3.3.2
+pytest==9.1.1
+python-dateutil==2.9.0.post0
+scipy==1.18.1
+six==1.17.0

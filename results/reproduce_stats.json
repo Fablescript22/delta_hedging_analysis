@@ -1,0 +1,37 @@
+{
+  "total_seconds": 84.5,
+  "python": "3.13.16",
+  "platform": "Linux-6.18.44-fc-v139-x86_64-with-glibc2.39",
+  "stages": [
+    {
+      "stage": "validation",
+      "seconds": 13.6,
+      "peak_rss_mb": 406.0,
+      "exit_code": 0
+    },
+    {
+      "stage": "part_a",
+      "seconds": 47.9,
+      "peak_rss_mb": 445.8,
+      "exit_code": 0
+    },
+    {
+      "stage": "part_b",
+      "seconds": 17.6,
+      "peak_rss_mb": 209.2,
+      "exit_code": 0
+    },
+    {
+      "stage": "gallery",
+      "seconds": 0.0,
+      "peak_rss_mb": 16.7,
+      "exit_code": 0
+    },
+    {
+      "stage": "data_dictionary",
+      "seconds": 0.0,
+      "peak_rss_mb": 67.2,
+      "exit_code": 0
+    }
+  ]
+}

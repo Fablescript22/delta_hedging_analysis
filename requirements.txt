@@ -1,0 +1,6 @@
+# Direct dependencies with compatible-release bounds.  Exact versions that were tested are in requirements-lock.txt.
+numpy>=1.24,<3
+pandas>=2.0,<4
+scipy>=1.10,<2
+matplotlib>=3.7,<4
+pytest>=7.0,<10

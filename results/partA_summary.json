@@ -1,0 +1,35 @@
+{
+  "seed": 42,
+  "paths_per_setting": 20000,
+  "a2_fits": {
+    "slope_all": -0.4845330282461586,
+    "slope_all_se": 0.0020502379996892553,
+    "intercept_all": 1.8561234370164421,
+    "r2_all": 0.9999104855985754,
+    "slope_N_ge_20": -0.48909459238825975,
+    "slope_N_ge_20_se": 0.0018947149048007558,
+    "r2_N_ge_20": 0.9999549801832195,
+    "intercept_N_ge_20": 1.8791775253952618,
+    "std_ratio_N5_over_N500": 9.261862041771732,
+    "ratio_if_1_over_sqrtN": 10.0,
+    "ratio_if_1_over_N": 100.0
+  },
+  "a3_summary": {
+    "mean_on_gap_slope": 95.10986016953063,
+    "mean_on_gap_slope_se": 6.725011044973259,
+    "mean_on_gap_r2": 0.9756116784584394,
+    "pooled_pnl_on_gaphat_slope": 94.7749072450786,
+    "pooled_pnl_on_gaphat_slope_se": 0.10876906703112794,
+    "pooled_pnl_on_gaphat_intercept": 0.3260085470212148,
+    "pooled_pnl_on_gaphat_r2": 0.8443138994879268,
+    "r2_pnl_vs_gamma_estimate_pathwise": 0.9989813533917431,
+    "r2_pnl_vs_gamma_estimate_constvar": 0.9888433784459433,
+    "n_pooled": 140000,
+    "n_steps": 250,
+    "gaphat_std_pooled": 0.0250029553959983,
+    "gaphat_std_within_mean": 0.003896467905524719,
+    "within_r2_min": 0.03348682986284818,
+    "within_r2_max": 0.638428183132636
+  },
+  "a6_rmse_loglog_slope": -0.7295342096249013
+}

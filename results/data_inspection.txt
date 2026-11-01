@@ -1,0 +1,81 @@
+
+==============================================================================
+NIFTY 50 (price return index)
+==============================================================================
+Files: 11
+Raw header of first file: ['Index Name', 'Date', 'Open', 'High', 'Low', 'Close']
+  NIFTY 50_Historical_PR_01012016to31122016.csv        rows= 247  2016-01-01 -> 2016-12-30  order=descending bad_dates=0 blank=0 non_numeric=0
+  NIFTY 50_Historical_PR_01012017to31122017.csv        rows= 248  2017-01-02 -> 2017-12-29  order=descending bad_dates=0 blank=0 non_numeric=0
+  NIFTY 50_Historical_PR_01012018to31122018.csv        rows= 246  2018-01-01 -> 2018-12-31  order=descending bad_dates=0 blank=0 non_numeric=0
+  NIFTY 50_Historical_PR_01012019to31122019.csv        rows= 245  2019-01-01 -> 2019-12-31  order=descending bad_dates=0 blank=0 non_numeric=0
+  NIFTY 50_Historical_PR_01012020to31122020.csv        rows= 252  2020-01-01 -> 2020-12-31  order=descending bad_dates=0 blank=0 non_numeric=0
+  NIFTY 50_Historical_PR_01012021to31122021.csv        rows= 248  2021-01-01 -> 2021-12-31  order=descending bad_dates=0 blank=0 non_numeric=0
+  NIFTY 50_Historical_PR_01012022to31122022.csv        rows= 248  2022-01-03 -> 2022-12-30  order=descending bad_dates=0 blank=0 non_numeric=0
+  NIFTY 50_Historical_PR_01012023to31122023.csv        rows= 246  2023-01-02 -> 2023-12-29  order=descending bad_dates=0 blank=0 non_numeric=0
+  NIFTY 50_Historical_PR_01012024to31122024.csv        rows= 249  2024-01-01 -> 2024-12-31  order=descending bad_dates=0 blank=0 non_numeric=0
+  NIFTY 50_Historical_PR_01012025to31122025.csv        rows= 249  2025-01-01 -> 2025-12-31  order=descending bad_dates=0 blank=0 non_numeric=0
+  NIFTY 50_Historical_PR_01012026to17102026.csv        rows= 196  2026-01-01 -> 2026-10-16  order=descending bad_dates=0 blank=0 non_numeric=0
+Same header in every file: True
+Total rows: 2674   duplicate dates: 0   range: 2016-01-01 -> 2026-10-16
+NaN counts per column after parsing:
+Date     0
+Open     0
+High     0
+Low      0
+Close    0
+Weekend-dated rows: 10
+Calendar gaps > 5 days: 0
+Rows per calendar year: {2016: 247, 2017: 248, 2018: 246, 2019: 245, 2020: 252, 2021: 248, 2022: 248, 2023: 246, 2024: 249, 2025: 249, 2026: 196}
+OHLC sanity: High<Low rows=0; Close outside [Low,High] rows=0
+Close summary: min=6970.6000  max=26328.5500  mean=15794.6960  zeros/non-positive=0
+
+==============================================================================
+India VIX
+==============================================================================
+Files: 11
+Raw header of first file: ['Date ', 'Open ', 'High ', 'Low ', 'Close ', 'Prev. Close ', 'Change ', '% Change ']
+  hist_india_vix_-01-01-2016-to-31-12-2016.csv         rows= 247  2016-01-01 -> 2016-12-30  order=ascending  bad_dates=0 blank=0 non_numeric=0
+  hist_india_vix_-01-01-2017-to-31-12-2017.csv         rows= 248  2017-01-02 -> 2017-12-29  order=ascending  bad_dates=0 blank=0 non_numeric=0
+  hist_india_vix_-01-01-2018-to-31-12-2018.csv         rows= 246  2018-01-01 -> 2018-12-31  order=ascending  bad_dates=0 blank=0 non_numeric=0
+  hist_india_vix_-01-01-2019-to-31-12-2019.csv         rows= 245  2019-01-01 -> 2019-12-31  order=ascending  bad_dates=0 blank=0 non_numeric=0
+  hist_india_vix_-01-01-2020-to-31-12-2020.csv         rows= 252  2020-01-01 -> 2020-12-31  order=ascending  bad_dates=0 blank=0 non_numeric=0
+  hist_india_vix_-01-01-2021-to-31-12-2021.csv         rows= 248  2021-01-01 -> 2021-12-31  order=ascending  bad_dates=0 blank=2 non_numeric=0
+  hist_india_vix_-01-01-2022-to-01-12-2022.csv         rows= 227  2022-01-03 -> 2022-12-01  order=ascending  bad_dates=0 blank=0 non_numeric=0
+  hist_india_vix_-01-01-2023-to-31-12-2023.csv         rows= 246  2023-01-02 -> 2023-12-29  order=ascending  bad_dates=0 blank=0 non_numeric=0
+  hist_india_vix_-01-01-2024-to-31-12-2024.csv         rows= 248  2024-01-01 -> 2024-12-31  order=ascending  bad_dates=0 blank=0 non_numeric=0
+  hist_india_vix_-01-01-2025-to-31-12-2025.csv         rows= 249  2025-01-01 -> 2025-12-31  order=ascending  bad_dates=0 blank=0 non_numeric=0
+  hist_india_vix_-01-01-2026-to-17-10-2026.csv         rows= 196  2026-01-01 -> 2026-10-16  order=ascending  bad_dates=0 blank=0 non_numeric=0
+Same header in every file: True
+Total rows: 2652   duplicate dates: 0   range: 2016-01-01 -> 2026-10-16
+NaN counts per column after parsing:
+Date           0
+Open           0
+High           0
+Low            0
+Close          0
+Prev. Close    0
+Change         0
+% Change       2
+Weekend-dated rows: 9
+Calendar gaps > 5 days: 1
+    2022-12-01 -> 2023-01-02 (32 days)
+Rows per calendar year: {2016: 247, 2017: 248, 2018: 246, 2019: 245, 2020: 252, 2021: 248, 2022: 227, 2023: 246, 2024: 248, 2025: 249, 2026: 196}
+OHLC sanity: High<Low rows=0; Close outside [Low,High] rows=2
+Close summary: min=9.1500  max=83.6075  mean=16.4544  zeros/non-positive=0
+
+-- NIFTY extra checks --
+Index Name values: ['NIFTY 50']
+Daily log-return: mean=0.000399 std=0.010216 min=-0.1390 (2020-03-23) max=0.0840 (2020-04-07)
+|return| > 7%: 4 days
+
+-- VIX extra checks --
+VIX Close quantiles (0,1%,50%,99%,100%): {0.0: 9.15, 0.01: 10.22, 0.5: 15.06, 0.99: 41.91, 1.0: 83.61}
+Three highest VIX closes: [('2020-03-24', 83.6075), ('2020-03-25', 77.625), ('2020-03-19', 72.1975)]
+
+-- Cross-series alignment --
+NIFTY dates: 2674  VIX dates: 2652  common: 2652
+Only in NIFTY: 22   Only in VIX: 0
+  Only-in-NIFTY by year: {2022: 21, 2024: 1}
+    ['2022-12-02', '2022-12-05', '2022-12-06', '2022-12-07', '2022-12-08', '2022-12-09', '2022-12-12', '2022-12-13', '2022-12-14', '2022-12-15', '2022-12-16', '2022-12-19', '2022-12-20', '2022-12-21', '2022-12-22', '2022-12-23', '2022-12-26', '2022-12-27', '2022-12-28', '2022-12-29', '2022-12-30', '2024-03-02']
+  Only-in-VIX by year: {}
+Common range: 2016-01-01 -> 2026-10-16

@@ -1,0 +1,14 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+.ipynb_checkpoints/
+# personal study notes - not part of the repository
+explainer_im_7.md
+# virtual environments and tool caches
+.venv/
+venv/
+env/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+.DS_Store

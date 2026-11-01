@@ -1,0 +1,181 @@
+{
+  "note": "SHA-256 manifest of the untouched raw data files; regenerate with `python -m src.integrity --write`.",
+  "files": [
+    {
+      "file": "NIFTY 50_Historical_PR_01012016to31122016.csv",
+      "bytes": 16349,
+      "sha256": "2baa83afaad194e22abaa2a4d0b57d5c9e9a9ff42754bce6b1ea3304f6bb4d3b",
+      "rows": 247,
+      "first_date": "2016-01-01",
+      "last_date": "2016-12-30"
+    },
+    {
+      "file": "NIFTY 50_Historical_PR_01012017to31122017.csv",
+      "bytes": 16711,
+      "sha256": "091edc8c43efa8f4f1af577b6fc54e60cbb6a7cb367ab58648ee445d205fd31e",
+      "rows": 248,
+      "first_date": "2017-01-02",
+      "last_date": "2017-12-29"
+    },
+    {
+      "file": "NIFTY 50_Historical_PR_01012018to31122018.csv",
+      "bytes": 17262,
+      "sha256": "3d94017c57379cdbc39b95e19c1b3f2983c9802d208a43ea88d0402ebd7ab98e",
+      "rows": 246,
+      "first_date": "2018-01-01",
+      "last_date": "2018-12-31"
+    },
+    {
+      "file": "NIFTY 50_Historical_PR_01012019to31122019.csv",
+      "bytes": 17197,
+      "sha256": "17d841f8ff29833b17da4d1ff35e67eaca87dd6c9955e20d6127aeb6f010a2a5",
+      "rows": 245,
+      "first_date": "2019-01-01",
+      "last_date": "2019-12-31"
+    },
+    {
+      "file": "NIFTY 50_Historical_PR_01012020to31122020.csv",
+      "bytes": 17460,
+      "sha256": "987cdb09d9c3f32f475690861a8b0af77f020fcbf9cc3e4c68b33ac476d8d113",
+      "rows": 252,
+      "first_date": "2020-01-01",
+      "last_date": "2020-12-31"
+    },
+    {
+      "file": "NIFTY 50_Historical_PR_01012021to31122021.csv",
+      "bytes": 17407,
+      "sha256": "3baf444e0f22d44fc991fcbdb4261bd5a917aac12d8ce235a0315194f8db545c",
+      "rows": 248,
+      "first_date": "2021-01-01",
+      "last_date": "2021-12-31"
+    },
+    {
+      "file": "NIFTY 50_Historical_PR_01012022to31122022.csv",
+      "bytes": 17407,
+      "sha256": "d760bf82e661c8a2dc4fa7d15208a371c32c97f0a9e42eb2e907145d923c3ea1",
+      "rows": 248,
+      "first_date": "2022-01-03",
+      "last_date": "2022-12-30"
+    },
+    {
+      "file": "NIFTY 50_Historical_PR_01012023to31122023.csv",
+      "bytes": 17267,
+      "sha256": "850b9e85ff402b4e8df40e2859aa4f67f3cb675cab23ca75c2f83c5e511e7442",
+      "rows": 246,
+      "first_date": "2023-01-02",
+      "last_date": "2023-12-29"
+    },
+    {
+      "file": "NIFTY 50_Historical_PR_01012024to31122024.csv",
+      "bytes": 17167,
+      "sha256": "c82902875cbce8f957a94cd2389c95bac35b6e31c689497f817a87ec39096f77",
+      "rows": 249,
+      "first_date": "2024-01-01",
+      "last_date": "2024-12-31"
+    },
+    {
+      "file": "NIFTY 50_Historical_PR_01012025to31122025.csv",
+      "bytes": 17023,
+      "sha256": "ce1faf932060e5edde6615044e18c4754e8de73285e2ca412f2b22c9415f65d1",
+      "rows": 249,
+      "first_date": "2025-01-01",
+      "last_date": "2025-12-31"
+    },
+    {
+      "file": "NIFTY 50_Historical_PR_01012026to17102026.csv",
+      "bytes": 13407,
+      "sha256": "739455a64d2b6d62f08288e4d7b8770e005cdf139833b5b64de26cdefbf15053",
+      "rows": 196,
+      "first_date": "2026-01-01",
+      "last_date": "2026-10-16"
+    },
+    {
+      "file": "hist_india_vix_-01-01-2016-to-31-12-2016.csv",
+      "bytes": 14674,
+      "sha256": "a4be8f58fdeefd0937b60e408590b5ca559919ddab6d932bae8d4ed6827774d5",
+      "rows": 247,
+      "first_date": "2016-01-01",
+      "last_date": "2016-12-30"
+    },
+    {
+      "file": "hist_india_vix_-01-01-2017-to-31-12-2017.csv",
+      "bytes": 14689,
+      "sha256": "74f004cfb1cda698466830b5eea8d4cc517ae265a8d9c885add0b332660118c9",
+      "rows": 248,
+      "first_date": "2017-01-02",
+      "last_date": "2017-12-29"
+    },
+    {
+      "file": "hist_india_vix_-01-01-2018-to-31-12-2018.csv",
+      "bytes": 14568,
+      "sha256": "ee15e109d8bdcea903d54a527e276c5476a7fc38b413a492b3a9ab33a062919a",
+      "rows": 246,
+      "first_date": "2018-01-01",
+      "last_date": "2018-12-31"
+    },
+    {
+      "file": "hist_india_vix_-01-01-2019-to-31-12-2019.csv",
+      "bytes": 14520,
+      "sha256": "f710e5312e12b064a831b2e61aa8006d08375ba958de0a9b5d835670c244e1fd",
+      "rows": 245,
+      "first_date": "2019-01-01",
+      "last_date": "2019-12-31"
+    },
+    {
+      "file": "hist_india_vix_-01-01-2020-to-31-12-2020.csv",
+      "bytes": 14964,
+      "sha256": "59bc87d183728cec2fdc5fe7f3f07bc99295a3538d3d9af61a462d85c222a112",
+      "rows": 252,
+      "first_date": "2020-01-01",
+      "last_date": "2020-12-31"
+    },
+    {
+      "file": "hist_india_vix_-01-01-2021-to-31-12-2021.csv",
+      "bytes": 14708,
+      "sha256": "7433afd2dab3e9eb52c4a18fd61e926b67a42fd8510238f172ce27ff04cbd67f",
+      "rows": 248,
+      "first_date": "2021-01-01",
+      "last_date": "2021-12-31"
+    },
+    {
+      "file": "hist_india_vix_-01-01-2022-to-01-12-2022.csv",
+      "bytes": 13505,
+      "sha256": "205084ba49aef7d153757169de69e09f66229e9e139ec99846b904fc0aa12d54",
+      "rows": 227,
+      "first_date": "2022-01-03",
+      "last_date": "2022-12-01"
+    },
+    {
+      "file": "hist_india_vix_-01-01-2023-to-31-12-2023.csv",
+      "bytes": 14534,
+      "sha256": "4297d9dbdcc2e3788b59d1cb0fb80fbd7556c928b87d8da15994d6ad65d91dc2",
+      "rows": 246,
+      "first_date": "2023-01-02",
+      "last_date": "2023-12-29"
+    },
+    {
+      "file": "hist_india_vix_-01-01-2024-to-31-12-2024.csv",
+      "bytes": 14684,
+      "sha256": "9c9b6a2e6e261fff81d2738cd1a98162921d059d589beee3bbd284b70b7a2aae",
+      "rows": 248,
+      "first_date": "2024-01-01",
+      "last_date": "2024-12-31"
+    },
+    {
+      "file": "hist_india_vix_-01-01-2025-to-31-12-2025.csv",
+      "bytes": 14498,
+      "sha256": "ffc7cce46a8b81c4d242bb03e1afd81698574803b17b58918810b41426c0fe6c",
+      "rows": 249,
+      "first_date": "2025-01-01",
+      "last_date": "2025-12-31"
+    },
+    {
+      "file": "hist_india_vix_-01-01-2026-to-17-10-2026.csv",
+      "bytes": 11344,
+      "sha256": "a4c010b4d4db6ebb69aa08f46708a3ddb5f297c7123c9d3952f2b6e0c26533c5",
+      "rows": 196,
+      "first_date": "2026-01-01",
+      "last_date": "2026-10-16"
+    }
+  ]
+}

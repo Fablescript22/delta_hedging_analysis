@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# The working copy that holds the NSE raw files runs everything.  The public repository ships without them (their
+# publishers' terms restrict redistribution): there the raw-data steps and the full regeneration are skipped with a
+# notice, and the tests that need the files are skipped by tests/conftest.py with a visible reason.
+
+jobs:
+  test:
+    name: tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Raw-data integrity (SHA-256 manifest), when the raw files are present
+        if: ${{ hashFiles('data/raw/*.csv') != '' }}
+        run: python -m src check-data
+      - name: Test suite
+        run: python -m src test
+
+  reproduce:
+    name: regenerate every result
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Are the raw files present?
+        id: raw
+        run: |
+          if ls data/raw/*.csv >/dev/null 2>&1; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; fi
+      - name: Skipped, no raw data in this repository
+        if: steps.raw.outputs.present != 'true'
+        run: echo "::notice::Raw NSE files are not in this repository, so the full regeneration and the output comparison are skipped."
+      - uses: actions/setup-python@v5
+        if: steps.raw.outputs.present == 'true'
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements-lock.txt
+        if: steps.raw.outputs.present == 'true'
+      - name: Snapshot the committed results, docs and README
+        if: steps.raw.outputs.present == 'true'
+        run: python -m src snapshot "$RUNNER_TEMP/committed"
+      - name: Regenerate (validation, Part A, Part B, gallery, data dictionary, README), each stage in its own process
+        if: steps.raw.outputs.present == 'true'
+        run: python -m src reproduce
+      - name: Fail if any regenerated table, document or README differs from what is committed
+        if: steps.raw.outputs.present == 'true'
+        run: python -m src verify-outputs "$RUNNER_TEMP/committed"
+      - uses: actions/upload-artifact@v4
+        if: steps.raw.outputs.present == 'true'
+        with:
+          name: results-and-figures
+          path: |
+            results/
+            figures/
+            README.md
+            docs/
